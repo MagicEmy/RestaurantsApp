@@ -29,7 +29,7 @@ class RestaurantsViewModel(private val stateHandle: SavedStateHandle): ViewModel
             GsonConverterFactory.create()
         )
             .baseUrl(
-                "https://restaurants-85734-default-rtdb.europe-west1.firebasedatabase.app"
+                "https://restaurants-85734-default-rtdb.europe-west1.firebasedatabase.app/"
             )
             .build()
         restInterface = retrofit.create(
