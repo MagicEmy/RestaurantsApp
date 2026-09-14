@@ -3,9 +3,56 @@ package com.example.restaurantsapp
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class RestaurantsViewModel(private val stateHandle: SavedStateHandle): ViewModel() {
-    val state = mutableStateOf(dummyRestaurants.restoreSelections())
+    private var restInterface: RestaurantsApiService
+    private val errorHandler = CoroutineExceptionHandler { _, exception ->
+        exception.printStackTrace()
+    }
+    val state = mutableStateOf(emptyList<Restaurant>())
+
+    init {
+        val retrofit: Retrofit = Retrofit.Builder()
+        .addConverterFactory(
+            GsonConverterFactory.create()
+        )
+            .baseUrl(
+                "https://restaurants-85734-default-rtdb.europe-west1.firebasedatabase.app"
+            )
+            .build()
+        restInterface = retrofit.create(
+            RestaurantsApiService::class.java
+        )
+        getRestaurants()
+    }
+
+    private suspend fun getRemoteRestaurants(): List<Restaurant> {
+        return withContext(Dispatchers.IO) {
+            restInterface.getRestaurants()
+        }
+    }
+    private fun getRestaurants() {
+        viewModelScope.launch(errorHandler) {
+            try {
+                val restaurants = getRemoteRestaurants()
+                state.value = restaurants.restoreSelections()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
     fun toggleFavorite(id: Int) {
         val restaurants = state.value.toMutableList()
         val itemIndex = restaurants.indexOfFirst { it.id == id }
