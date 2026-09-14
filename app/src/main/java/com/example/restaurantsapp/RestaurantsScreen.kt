@@ -1,6 +1,5 @@
 package com.example.restaurantsapp
 
-import android.R.attr.onClick
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -18,10 +17,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -31,31 +26,39 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.restaurantsapp.ui.theme.RestaurantsAppTheme
 
 @Composable
-fun RestaurantsScreen() {
+fun RestaurantsScreen(onItemClick: (id: Int) -> Unit) {
     val viewModel: RestaurantsViewModel = viewModel()
 
     LazyColumn(
-        contentPadding = PaddingValues (
+        contentPadding = PaddingValues(
             vertical = 8.dp,
-            horizontal = 8.dp )
+            horizontal = 8.dp
+        )
     ) {
-        items(viewModel.state.value){ restaurant ->
-            RestaurantsItem(restaurant) { id ->
-                viewModel.toggleFavorite(id)
-            }
+        items(viewModel.state.value) { restaurant ->
+            RestaurantsItem(
+                restaurant,
+                onFavoriteClick =
+                    { id -> viewModel.toggleFavorite(id) },
+                onItemClick = { id -> onItemClick(id) }
+            )
         }
     }
 }
 
 @Composable
-fun RestaurantsItem(item: Restaurant, onClick: (id: Int) -> Unit) {
+fun RestaurantsItem(item: Restaurant,
+                    onFavoriteClick: (id: Int) -> Unit,
+                    onItemClick: (id: Int) -> Unit) {
     val icon = if (item.isFavorite)
         Icons.Filled.Favorite
     else
         Icons.Filled.FavoriteBorder
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = Modifier.padding(8.dp),
+        modifier = Modifier
+            .padding(8.dp)
+            .clickable { onItemClick(item.id)}
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -70,16 +73,16 @@ fun RestaurantsItem(item: Restaurant, onClick: (id: Int) -> Unit) {
                 item.description,
                 Modifier.weight(0.7f))
             RestaurantIcon(icon, Modifier.weight(0.15f)) {
-                onClick(item.id)
+                onFavoriteClick(item.id)
             }
         }
     }
 }
 
 @Composable
-private fun RestaurantIcon(icon: ImageVector,
-                           modifier: Modifier,
-                           onClick: () -> Unit = {}) {
+fun RestaurantIcon(icon: ImageVector,
+                   modifier: Modifier,
+                   onClick: () -> Unit = {}) {
     Image(
         imageVector = icon,
         contentDescription = "Restaurant icon",
@@ -92,9 +95,13 @@ private fun RestaurantIcon(icon: ImageVector,
 @Composable
 fun RestaurantDetails(title: String,
                       description: String,
-                      modifier: Modifier) {
-
-    Column(modifier = modifier) {
+                      modifier: Modifier,
+                      horizontalAlignment: Alignment.Horizontal = Alignment.Start
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = horizontalAlignment
+    ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium
@@ -124,7 +131,7 @@ private fun FavoriteIcon(icon: ImageVector,
 @Composable
 fun DefaultPreview() {
     RestaurantsAppTheme {
-        RestaurantsScreen()
+        RestaurantsScreen(onItemClick = {})
     }
 }
 
