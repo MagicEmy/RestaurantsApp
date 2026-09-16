@@ -15,7 +15,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun RestaurantDetailsScreen() {
     val viewModel: RestaurantDetailsViewModel = viewModel()
-    val item = viewModel.state.value
+    val item = viewModel.state
     if (item != null) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

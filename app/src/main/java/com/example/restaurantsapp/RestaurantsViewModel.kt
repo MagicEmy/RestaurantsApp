@@ -1,6 +1,8 @@
 package com.example.restaurantsapp
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,7 +18,8 @@ class RestaurantsViewModel(private val stateHandle: SavedStateHandle): ViewModel
     private val errorHandler = CoroutineExceptionHandler { _, exception ->
         exception.printStackTrace()
     }
-    val state = mutableStateOf(emptyList<Restaurant>())
+    var state by mutableStateOf(emptyList<Restaurant>())
+        private set
 
     init {
         val retrofit: Retrofit = Retrofit.Builder()
@@ -42,20 +45,20 @@ class RestaurantsViewModel(private val stateHandle: SavedStateHandle): ViewModel
         viewModelScope.launch(errorHandler) {
             try {
                 val restaurants = getRemoteRestaurants()
-                state.value = restaurants.restoreSelections()
+                state = restaurants.restoreSelections()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
     fun toggleFavorite(id: Int) {
-        val restaurants = state.value.toMutableList()
+        val restaurants = state.toMutableList()
         val itemIndex = restaurants.indexOfFirst { it.id == id }
         val item = restaurants[itemIndex]
         restaurants[itemIndex] =
             item.copy(isFavorite = !item.isFavorite)
         storeSelection(restaurants[itemIndex])
-        state.value = restaurants
+        state = restaurants
     }
 
     private fun storeSelection(item: Restaurant) {

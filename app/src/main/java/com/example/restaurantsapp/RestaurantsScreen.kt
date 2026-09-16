@@ -35,7 +35,7 @@ fun RestaurantsScreen(onItemClick: (id: Int) -> Unit) {
             horizontal = 8.dp
         )
     ) {
-        items(viewModel.state.value) { restaurant ->
+        items(viewModel.state) { restaurant ->
             RestaurantsItem(
                 restaurant,
                 onFavoriteClick =
