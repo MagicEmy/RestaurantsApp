@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+*.hprof
+.idea/deploymentTargetDropDown.xml
+.idea/modules/
+.idea/kotlinc.xml
