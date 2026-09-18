@@ -3,7 +3,6 @@ package com.example.restaurantsapp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -18,7 +17,7 @@ import java.net.UnknownHostException
 
 class RestaurantsViewModel(): ViewModel() {
     private var restInterface: RestaurantsApiService
-    private var RestaurantsDao = RestaurantsDb.getDaoInstance(
+    private var restaurantsDao = RestaurantsDb.getDaoInstance(
             RestaurantsApplication.getAppContext())
     var state by mutableStateOf(emptyList<Restaurant>())
 
@@ -43,31 +42,31 @@ class RestaurantsViewModel(): ViewModel() {
                     is UnknownHostException,
                     is ConnectException,
                     is HttpException -> {
-                        if (RestaurantsDao.getAll().isEmpty())
+                        if (restaurantsDao.getAll().isEmpty())
                             throw Exception(
                                 "Something went wrong." + "We have no data.")
                     }
                     else -> throw e
                 }
             }
-            return@withContext RestaurantsDao.getAll()
+            return@withContext restaurantsDao.getAll()
         }
     }
 
-    private suspend fun refreshCash() {
-        val remoteRestaurants = restInterface.getRestaurants()
-        val favoriteRestaurants = RestaurantsDao.getAllFavorited()
-        RestaurantsDao.addAll(remoteRestaurants)
-        RestaurantsDao.updateAll(
-            favoriteRestaurants.map{
-                PartialRestaurant(it.id, true)
-            }
-        )
-    }
     private fun getRestaurants() {
         viewModelScope.launch(errorHandler) {
             state = getAllRestaurants()
         }
+    }
+    private suspend fun refreshCash() {
+        val remoteRestaurants = restInterface.getRestaurants()
+        val favoriteRestaurants = restaurantsDao.getAllFavorited()
+        restaurantsDao.addAll(remoteRestaurants)
+        restaurantsDao.updateAll(
+            favoriteRestaurants.map{
+                PartialRestaurant(it.id, true)
+            }
+        )
     }
     fun toggleFavorite(id: Int, oldValue: Boolean) {
         viewModelScope.launch(errorHandler) {
@@ -78,7 +77,7 @@ class RestaurantsViewModel(): ViewModel() {
     }
     private suspend fun toggleFavoriteRestaurant (id: Int, oldValue: Boolean) =
         withContext(Dispatchers.IO) {
-            RestaurantsDao.update(PartialRestaurant(id = id, isFavorite = !oldValue))
-            RestaurantsDao.getAll()
+            restaurantsDao.update(PartialRestaurant(id = id, isFavorite = !oldValue))
+            restaurantsDao.getAll()
         }
 }
