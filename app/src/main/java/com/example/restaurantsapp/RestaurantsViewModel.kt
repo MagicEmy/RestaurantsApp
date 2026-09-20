@@ -1,8 +1,7 @@
 package com.example.restaurantsapp
 
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -17,14 +16,15 @@ import java.net.UnknownHostException
 
 class RestaurantsViewModel(): ViewModel() {
     private val repository =  RestaurantsRepository()
-    var state by mutableStateOf(
+    private val _state = mutableStateOf(
         RestaurantsScreenState(
             restaurants = listOf(), isLoading = true)
     )
+    val state: State<RestaurantsScreenState> get() = _state
 
     private val errorHandler = CoroutineExceptionHandler { _, exception ->
         exception.printStackTrace()
-        state = state.copy(
+        _state.value = _state.value.copy(
             error = exception.message,
             isLoading = false
         )
@@ -37,7 +37,7 @@ class RestaurantsViewModel(): ViewModel() {
     private fun getRestaurants() {
         viewModelScope.launch(errorHandler) {
             val restaurants = repository.getAllRestaurants()
-            state = state.copy(
+            _state.value = _state.value.copy(
                 restaurants = restaurants,
                 isLoading = false
             )
@@ -48,7 +48,7 @@ class RestaurantsViewModel(): ViewModel() {
         viewModelScope.launch(errorHandler) {
             val updatedRestaurants =
                 repository.toggleFavoriteRestaurant(id, oldValue)
-            state = state.copy(restaurants = updatedRestaurants)
+            _state.value = _state.value.copy(restaurants = updatedRestaurants)
         }
     }
 

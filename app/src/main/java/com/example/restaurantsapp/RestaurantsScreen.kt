@@ -31,7 +31,7 @@ import com.example.restaurantsapp.ui.theme.RestaurantsAppTheme
 @Composable
 fun RestaurantsScreen(onItemClick: (id: Int) -> Unit) {
     val viewModel: RestaurantsViewModel = viewModel()
-    val state = viewModel.state
+    val state = viewModel.state.value
 
     Box(
         contentAlignment = Alignment.Center,
