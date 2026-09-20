@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -30,17 +31,19 @@ import com.example.restaurantsapp.ui.theme.RestaurantsAppTheme
 @Composable
 fun RestaurantsScreen(onItemClick: (id: Int) -> Unit) {
     val viewModel: RestaurantsViewModel = viewModel()
-    val restaurants = viewModel.state
-    val isLoading = restaurants.isEmpty()
+    val state = viewModel.state
 
-    Box() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
         LazyColumn(
             contentPadding = PaddingValues(
                 vertical = 8.dp,
                 horizontal = 8.dp
             )
         ) {
-            items(restaurants) { restaurant ->
+            items(state.restaurants) { restaurant ->
                 RestaurantsItem(
                     restaurant,
                     onFavoriteClick = { id, oldValue -> viewModel.toggleFavorite(id, oldValue) },
@@ -48,8 +51,10 @@ fun RestaurantsScreen(onItemClick: (id: Int) -> Unit) {
                 )
             }
         }
-        if (isLoading)
+        if (state.isLoading)
             CircularProgressIndicator()
+        if (state.error != null)
+            Text(state.error)
     }
 }
 
@@ -121,19 +126,6 @@ fun RestaurantDetails(title: String,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
-}
-
-@Composable
-private fun FavoriteIcon(icon: ImageVector,
-                         modifier: Modifier,
-                         onClick: () -> Unit ) {
-    Image(
-        imageVector = icon,
-        contentDescription = "Favorite restaurant icon",
-        modifier = modifier
-            .padding(8.dp)
-            .clickable { onClick()}
-    )
 }
 
 @Preview

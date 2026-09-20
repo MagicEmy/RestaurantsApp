@@ -16,68 +16,40 @@ import java.net.ConnectException
 import java.net.UnknownHostException
 
 class RestaurantsViewModel(): ViewModel() {
-    private var restInterface: RestaurantsApiService
-    private var restaurantsDao = RestaurantsDb.getDaoInstance(
-            RestaurantsApplication.getAppContext())
-    var state by mutableStateOf(emptyList<Restaurant>())
+    private val repository =  RestaurantsRepository()
+    var state by mutableStateOf(
+        RestaurantsScreenState(
+            restaurants = listOf(), isLoading = true)
+    )
 
     private val errorHandler = CoroutineExceptionHandler { _, exception ->
         exception.printStackTrace()
+        state = state.copy(
+            error = exception.message,
+            isLoading = false
+        )
     }
 
     init {
-        val retrofit: Retrofit = Retrofit.Builder()
-            .addConverterFactory( GsonConverterFactory.create())
-            .baseUrl( "https://restaurants-85734-default-rtdb.europe-west1.firebasedatabase.app/")
-            .build()
-        restInterface = retrofit.create(RestaurantsApiService::class.java)
         getRestaurants()
-    }
-    private suspend fun getAllRestaurants(): List<Restaurant> {
-        return withContext(Dispatchers.IO) {
-            try {
-                refreshCash()
-            } catch (e: Exception) {
-                when (e) {
-                    is UnknownHostException,
-                    is ConnectException,
-                    is HttpException -> {
-                        if (restaurantsDao.getAll().isEmpty())
-                            throw Exception(
-                                "Something went wrong." + "We have no data.")
-                    }
-                    else -> throw e
-                }
-            }
-            return@withContext restaurantsDao.getAll()
-        }
     }
 
     private fun getRestaurants() {
         viewModelScope.launch(errorHandler) {
-            state = getAllRestaurants()
+            val restaurants = repository.getAllRestaurants()
+            state = state.copy(
+                restaurants = restaurants,
+                isLoading = false
+            )
         }
     }
-    private suspend fun refreshCash() {
-        val remoteRestaurants = restInterface.getRestaurants()
-        val favoriteRestaurants = restaurantsDao.getAllFavorited()
-        restaurantsDao.addAll(remoteRestaurants)
-        restaurantsDao.updateAll(
-            favoriteRestaurants.map{
-                PartialRestaurant(it.id, true)
-            }
-        )
-    }
+
     fun toggleFavorite(id: Int, oldValue: Boolean) {
         viewModelScope.launch(errorHandler) {
             val updatedRestaurants =
-                toggleFavoriteRestaurant(id, oldValue)
-            state = updatedRestaurants
+                repository.toggleFavoriteRestaurant(id, oldValue)
+            state = state.copy(restaurants = updatedRestaurants)
         }
     }
-    private suspend fun toggleFavoriteRestaurant (id: Int, oldValue: Boolean) =
-        withContext(Dispatchers.IO) {
-            restaurantsDao.update(PartialRestaurant(id = id, isFavorite = !oldValue))
-            restaurantsDao.getAll()
-        }
+
 }
