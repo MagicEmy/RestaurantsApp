@@ -4,8 +4,8 @@
 
 ## Features
 - **Restaurant List:** A dynamic list of restaurants fetched from Firebase and sorted by ID server-side.
-- **Favorites:** Ability to mark restaurants as favorites with state persistence across app restarts.
 - **Details and Deep Links:** Support for opening specific restaurant details directly via URL (e.g., `https://www.restaurantsapp.details.com/2`).
+- **Favorites:** Ability to mark restaurants as favorites with state persistence across app restarts.
 - **Offline Caching:** High-performance data management where API results are cached in a local Room database, allowing the app to work even without an internet connection.
 
 
@@ -18,16 +18,10 @@
 - **DI/Management:** Gradle Version Catalog (`libs.versions.toml`) for centralized dependency management.
 
 ## Architecture
-The app implements the **MVVM (Model-View-ViewModel)** pattern with **Unidirectional Data Flow (UDF)**:
-- **Model:** Data repository logic combining Retrofit for remote data and Room for local caching.
-- **View:** Declarative UI screens built with Compose.
-- **ViewModel:** Encapsulates business logic and exposes UI state using **Kotlin Property Delegation (`by`)** and `private set` for better encapsulation.
-
-## Setup
-To run the project locally:
-1. Clone the repository.
-2. Open the project in **Android Studio (Ladybug or later)**.
-3. Ensure you have your own Firebase database configured or use the existing URL in the code.
+The app implements the **MVVM (Model-View-ViewModel)** pattern with strict **Unidirectional Data Flow (UDF)**:
+- **Model:** Data repository logic combining Retrofit for remote data and Room for local caching via the **Repository Pattern**.
+- **View:** Declarative UI screens built with Compose that observe state and emit events.
+- **ViewModel:** Encapsulates business logic and manages UI state using the **Backing Property pattern** (`_state` and `state`). This ensures that only the ViewModel can modify the state, providing robust encapsulation and preventing accidental side effects from the UI layer.
 
 ---
 *Project created for educational purposes to explore modern Android development.*
