@@ -3,11 +3,10 @@
 **Restaurants App** is a modern Android application designed to explore and manage a list of restaurants. The project follows Android development best practices, using **Jetpack Compose** and a reactive, offline-first architecture.
 
 ## Features
+- **Offline Caching:** High-performance data management where API results are cached in a local Room database, allowing the app to work even without an internet connection.
 - **Restaurant List:** A dynamic list of restaurants fetched from Firebase and sorted by ID server-side.
 - **Details and Deep Links:** Support for opening specific restaurant details directly via URL (e.g., `https://www.restaurantsapp.details.com/2`).
 - **Favorites:** Ability to mark restaurants as favorites with state persistence across app restarts.
-- **Offline Caching:** High-performance data management where API results are cached in a local Room database, allowing the app to work even without an internet connection.
-
 
 ## Tech Stack
 - **UI:** [Jetpack Compose](https://developer.android.com/jetpack/compose) for a modern, declarative UI.
@@ -22,6 +21,9 @@ The app implements the **MVVM (Model-View-ViewModel)** pattern with strict **Uni
 - **Model:** Data repository logic combining Retrofit for remote data and Room for local caching via the **Repository Pattern**.
 - **View:** Declarative UI screens built with Compose that observe state and emit events.
 - **ViewModel:** Encapsulates business logic and manages UI state using the **Backing Property pattern** (`_state` and `state`). This ensures that only the ViewModel can modify the state, providing robust encapsulation and preventing accidental side effects from the UI layer.
+
+## Planned Refactoring & Roadmap
+- [ ] **Details Screen Architecture**: Refactor `RestaurantDetailsViewModel` to use a dedicated `RestaurantDetailsRepository` (and Use Cases) to match the main screen's architecture for complete codebase consistency once the book is completed.
 
 ---
 *Project created for educational purposes to explore modern Android development.*

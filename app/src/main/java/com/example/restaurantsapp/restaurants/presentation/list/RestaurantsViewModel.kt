@@ -1,20 +1,22 @@
-package com.example.restaurantsapp
+package com.example.restaurantsapp.restaurants.presentation.list
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.restaurantsapp.restaurants.domain.GetInitialRestaurantsUseCase
+import com.example.restaurantsapp.restaurants.presentation.list.RestaurantsScreenState
+import com.example.restaurantsapp.restaurants.domain.ToggleRestaurantUseCase
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
-
 class RestaurantsViewModel(): ViewModel() {
-    private val repository =  RestaurantsRepository()
-    private val _state = mutableStateOf(
-        RestaurantsScreenState(
-            restaurants = listOf(), isLoading = true)
-    )
+    private val _state =
+        mutableStateOf(RestaurantsScreenState(restaurants = listOf(), isLoading = true))
     val state: State<RestaurantsScreenState> get() = _state
+
+    private val getInitialRestaurantsUseCase = GetInitialRestaurantsUseCase()
+    private val toggleRestaurantUseCase = ToggleRestaurantUseCase()
 
     private val errorHandler = CoroutineExceptionHandler { _, exception ->
         exception.printStackTrace()
@@ -30,7 +32,7 @@ class RestaurantsViewModel(): ViewModel() {
 
     private fun getRestaurants() {
         viewModelScope.launch(errorHandler) {
-            val restaurants = repository.getAllRestaurants()
+            val restaurants = getInitialRestaurantsUseCase()
             _state.value = _state.value.copy(
                 restaurants = restaurants,
                 isLoading = false
@@ -40,8 +42,7 @@ class RestaurantsViewModel(): ViewModel() {
 
     fun toggleFavorite(id: Int, oldValue: Boolean) {
         viewModelScope.launch(errorHandler) {
-            val updatedRestaurants =
-                repository.toggleFavoriteRestaurant(id, oldValue)
+            val updatedRestaurants = toggleRestaurantUseCase(id, oldValue)
             _state.value = _state.value.copy(restaurants = updatedRestaurants)
         }
     }

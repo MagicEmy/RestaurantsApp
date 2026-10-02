@@ -1,22 +1,21 @@
-package com.example.restaurantsapp
+package com.example.restaurantsapp.restaurants.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
+import com.example.restaurantsapp.restaurants.presentation.details.RestaurantDetailsScreen
+import com.example.restaurantsapp.restaurants.presentation.details.RestaurantDetailsViewModel
+import com.example.restaurantsapp.restaurants.presentation.list.RestaurantsScreen
+import com.example.restaurantsapp.restaurants.presentation.list.RestaurantsViewModel
 import com.example.restaurantsapp.ui.theme.RestaurantsAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -35,9 +34,16 @@ class MainActivity : ComponentActivity() {
         val navController = rememberNavController()
         NavHost(navController, startDestination = "restaurants") {
             composable(route = "restaurants") {
-                RestaurantsScreen { id ->
-                    navController.navigate("restaurants/$id")
-                }
+                val viewModel: RestaurantsViewModel = viewModel()
+                RestaurantsScreen(
+                    state = viewModel.state.value,
+                    onItemClick = { id ->
+                        navController.navigate("restaurants/$id")
+                    },
+                    onFavoriteClick = { id, oldValue ->
+                        viewModel.toggleFavorite(id, oldValue)
+                    }
+                )
             }
             composable(
                 route = "restaurants/{restaurant_id}",
@@ -48,7 +54,8 @@ class MainActivity : ComponentActivity() {
                     uriPattern = "https://www.restaurantsapp.details.com/{restaurant_id}"
                 }),
             ) {
-                RestaurantDetailsScreen()
+                val viewModel: RestaurantDetailsViewModel = viewModel()
+                RestaurantDetailsScreen(state = viewModel.state.value)
             }
         }
     }
