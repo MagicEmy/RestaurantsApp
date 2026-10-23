@@ -1,29 +1,23 @@
 package com.example.restaurantsapp.restaurants.data
 
-import com.example.restaurantsapp.RestaurantsApplication
 import com.example.restaurantsapp.restaurants.data.local.LocalRestaurant
 import com.example.restaurantsapp.restaurants.data.local.PartialLocalRestaurant
-import com.example.restaurantsapp.restaurants.data.local.RestaurantsDb
+import com.example.restaurantsapp.restaurants.data.local.RestaurantsDao
 import com.example.restaurantsapp.restaurants.data.remote.RestaurantsApiService
 import com.example.restaurantsapp.restaurants.domain.Restaurant
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.net.ConnectException
 import java.net.UnknownHostException
 
-class RestaurantsRepository {
-    private var restInterface: RestaurantsApiService =
-        Retrofit.Builder()
-            .addConverterFactory(GsonConverterFactory.create())
-            .baseUrl("https://restaurants-85734-default-rtdb.europe-west1.firebasedatabase.app/")
-            .build()
-            .create(RestaurantsApiService::class.java)
-    private var restaurantsDao = RestaurantsDb.Companion.getDaoInstance(
-        RestaurantsApplication.Companion.getAppContext()
-    )
+@Singleton
+class RestaurantsRepository @Inject constructor(
+    private val restInterface: RestaurantsApiService,
+    private val restaurantsDao: RestaurantsDao
+){
     suspend fun loadRestaurants() {
         return withContext(Dispatchers.IO) {
             try {
@@ -54,7 +48,7 @@ class RestaurantsRepository {
     }
     private suspend fun refreshCash() {
         val remoteRestaurants = restInterface.getRestaurants()
-        val favoriteRestaurants = restaurantsDao.getAllFavorited()
+        val favoriteRestaurants = restaurantsDao.getAllFavorite()
         restaurantsDao.addAll(remoteRestaurants.map {
             LocalRestaurant(it.id, it.title, it.description, false)
         })

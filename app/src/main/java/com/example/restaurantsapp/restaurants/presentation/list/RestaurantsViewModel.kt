@@ -5,18 +5,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.restaurantsapp.restaurants.domain.GetInitialRestaurantsUseCase
-import com.example.restaurantsapp.restaurants.presentation.list.RestaurantsScreenState
 import com.example.restaurantsapp.restaurants.domain.ToggleRestaurantUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import jakarta.inject.Inject
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
-class RestaurantsViewModel(): ViewModel() {
+@HiltViewModel
+class RestaurantsViewModel @Inject constructor(
+    private val getRestaurantsUseCase: GetInitialRestaurantsUseCase,
+    private val toggleRestaurantUseCase: ToggleRestaurantUseCase): ViewModel() {
     private val _state =
-        mutableStateOf(RestaurantsScreenState(restaurants = listOf(), isLoading = true))
-    val state: State<RestaurantsScreenState> get() = _state
+        mutableStateOf(
+            RestaurantsScreenState(
+                restaurants = listOf(),
+                isLoading = true))
+    val state: State<RestaurantsScreenState>
+        get() = _state
 
-    private val getInitialRestaurantsUseCase = GetInitialRestaurantsUseCase()
-    private val toggleRestaurantUseCase = ToggleRestaurantUseCase()
 
     private val errorHandler = CoroutineExceptionHandler { _, exception ->
         exception.printStackTrace()
@@ -32,7 +38,7 @@ class RestaurantsViewModel(): ViewModel() {
 
     private fun getRestaurants() {
         viewModelScope.launch(errorHandler) {
-            val restaurants = getInitialRestaurantsUseCase()
+            val restaurants = getRestaurantsUseCase()
             _state.value = _state.value.copy(
                 restaurants = restaurants,
                 isLoading = false

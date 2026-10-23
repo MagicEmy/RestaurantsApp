@@ -1,12 +1,12 @@
 package com.example.restaurantsapp.restaurants.domain
 
-import com.example.restaurantsapp.restaurants.domain.GetSortedRestaurantsUseCase
-import com.example.restaurantsapp.restaurants.domain.Restaurant
 import com.example.restaurantsapp.restaurants.data.RestaurantsRepository
+import jakarta.inject.Inject
 
-class ToggleRestaurantUseCase {
-    private val repository: RestaurantsRepository = RestaurantsRepository()
-    private val getSortedRestaurantsUseCase = GetSortedRestaurantsUseCase()
+class ToggleRestaurantUseCase @Inject constructor (
+    private val repository: RestaurantsRepository,
+    private val getSortedRestaurantsUseCase: GetSortedRestaurantsUseCase
+){
 
     suspend operator fun invoke(
         id: Int,
