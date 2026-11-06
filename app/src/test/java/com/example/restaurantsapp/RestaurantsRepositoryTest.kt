@@ -1,31 +1,46 @@
 package com.example.restaurantsapp
 
 import com.example.restaurantsapp.restaurants.data.RestaurantsRepository
+import com.example.restaurantsapp.restaurants.data.local.LocalRestaurant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class RestaurantsRepositoryTest {
-    private val dispatcher = StandardTestDispatcher()
-    private val scope = TestScope(dispatcher)
 
     @Test
-    fun toggleFavorite_updatesFavoriteState() = scope.runTest {
+    fun toggleFavorite_updatesFavoriteState() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val fakeRoomDao = FakeRoomDao()
+
+
+        val originalRestaurant = LocalRestaurant(
+            id = 1,
+            title = "Test restaurant",
+            description = "Test description",
+            isFavorite = false
+        )
+        fakeRoomDao.addAll(
+            listOf(originalRestaurant)
+        )
+
         val repository = RestaurantsRepository(
             FakeApiService(),
-            FakeRoomDao(),
+            fakeRoomDao,
             dispatcher
         )
-        repository.loadRestaurants()
-        advanceUntilIdle()
+        repository.toggleFavoriteRestaurant(
+            id = originalRestaurant.id,
+            value = true
+        )
 
-        repository.toggleFavoriteRestaurant(id = 0, value = true)
-        val restaurants = repository.getRestaurants()
-        assert(restaurants.first {it.id == 0}.isFavorite)
+        val updatedRestaurant =
+            fakeRoomDao.getAll().single()
+
+        assert(updatedRestaurant.isFavorite)
     }
 
 }

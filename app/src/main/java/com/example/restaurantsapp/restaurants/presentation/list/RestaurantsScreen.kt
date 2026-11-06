@@ -7,13 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,16 +28,36 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.example.restaurantsapp.restaurants.domain.Restaurant
 import com.example.restaurantsapp.restaurants.presentation.Description
 import com.example.restaurantsapp.ui.theme.RestaurantsAppTheme
+import kotlinx.coroutines.flow.flowOf
 
 @Composable
 fun RestaurantsScreen(
     state: RestaurantsScreenState,
+    restaurants: LazyPagingItems<Restaurant>,
     onItemClick: (id: Int) -> Unit,
-    onFavoriteClick: (id: Int, oldValue: Boolean) -> Unit
+    onFavoriteClick: (id: Int, oldValue: Boolean) -> Unit,
+    onRetryRemote: () -> Unit
 ) {
+    val pagingRefreshState =
+        restaurants.loadState.refresh
+
+    val isInitialLoading =
+        restaurants.itemCount == 0 && (
+                state.isLoading || pagingRefreshState is LoadState.Loading
+                )
+    val initialError =
+        state.error ?: (
+                pagingRefreshState as? LoadState.Error)
+            ?.error
+            ?.message
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
@@ -47,23 +68,100 @@ fun RestaurantsScreen(
                 horizontal = 8.dp
             )
         ) {
-            items(state.restaurants) { restaurant ->
-                RestaurantsItem(
-                    restaurant,
-                    onFavoriteClick = { id, oldValue -> onFavoriteClick(id, oldValue) },
-                    onItemClick = { id -> onItemClick(id) }
-                )
+            items(
+                count = restaurants.itemCount,
+                key = restaurants.itemKey { restaurant ->
+                    restaurant.id
+                }
+            ) { index ->
+                val restaurant = restaurants[index]
+                if (restaurant != null) {
+                    RestaurantsItem(
+                        item = restaurant,
+                        onFavoriteClick = onFavoriteClick,
+                        onItemClick = onItemClick
+                    )
+                }
+            }
+
+            when (
+                val appendState = restaurants.loadState.append
+            ) {
+                is LoadState.Loading -> {
+                    item(key = "append_loading") {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+                is LoadState.Error -> {
+                    item(key = "append_error") {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = appendState.error.message
+                                    ?: "Unable to load more restaurants.",
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                            Button(
+                                onClick = {
+                                    restaurants.retry()
+                                },
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Text("Retry")
+                            }
+                        }
+                    }
+                }
+
+                is LoadState.NotLoading -> Unit
             }
         }
-        if (state.isLoading)
+
+        if (isInitialLoading) {
             CircularProgressIndicator(
                 Modifier.semantics {
-                    this.contentDescription =
+                    contentDescription =
                         Description.RESTAURANTS_LOADING
                 }
             )
-        if (state.error != null)
-            Text(state.error)
+        }
+        if (
+            initialError != null &&
+            restaurants.itemCount == 0
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(16.dp)
+            ){
+                Text(
+                    text = initialError,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Button(
+                    onClick = {
+                        if (state.error != null) {
+                            onRetryRemote()
+                        } else {
+                            restaurants.retry()
+                        }
+                    },
+                    modifier = Modifier.padding(top = 8.dp)
+                ){
+                    Text("Retry")
+                }
+            }
+        }
     }
 }
 
@@ -140,11 +238,19 @@ fun RestaurantDetails(title: String,
 @Preview
 @Composable
 fun DefaultPreview() {
+    val restaurants = flowOf(
+        PagingData.empty<Restaurant>()
+    ).collectAsLazyPagingItems()
+
     RestaurantsAppTheme {
-        RestaurantsScreen(RestaurantsScreenState(listOf(),
-                true),
-            {},
-            { _, _ ->}
+        RestaurantsScreen(
+            state = RestaurantsScreenState(
+                isLoading = true
+            ),
+            restaurants = restaurants,
+            onItemClick = {},
+            onFavoriteClick = { _, _ -> },
+            onRetryRemote = {}
         )
     }
 }

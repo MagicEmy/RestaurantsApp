@@ -5,8 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,14 +38,18 @@ class MainActivity : ComponentActivity() {
         NavHost(navController, startDestination = "restaurants") {
             composable(route = "restaurants") {
                 val viewModel: RestaurantsViewModel = hiltViewModel()
+                val restaurants =
+                    viewModel.pageRestaurants.collectAsLazyPagingItems()
                 RestaurantsScreen(
                     state = viewModel.state.value,
+                    restaurants = restaurants,
                     onItemClick = { id ->
                         navController.navigate("restaurants/$id")
                     },
                     onFavoriteClick = { id, oldValue ->
                         viewModel.toggleFavorite(id, oldValue)
-                    }
+                    },
+                    onRetryRemote = viewModel::retryInitialLoad
                 )
             }
             composable(

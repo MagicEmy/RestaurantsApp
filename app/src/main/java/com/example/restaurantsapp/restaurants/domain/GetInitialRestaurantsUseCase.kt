@@ -4,10 +4,9 @@ import com.example.restaurantsapp.restaurants.data.RestaurantsRepository
 import jakarta.inject.Inject
 
 class GetInitialRestaurantsUseCase @Inject constructor(
-    private val repository: RestaurantsRepository,
-    private val getSortedRestaurantsUseCase: GetSortedRestaurantsUseCase ) {
-    suspend operator fun invoke(): List<Restaurant> {
+    private val repository: RestaurantsRepository
+) {
+    suspend operator fun invoke() {
         repository.loadRestaurants()
-        return getSortedRestaurantsUseCase()
     }
 }

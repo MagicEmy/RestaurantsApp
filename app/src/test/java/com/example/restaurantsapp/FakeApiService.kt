@@ -5,7 +5,8 @@ import com.example.restaurantsapp.restaurants.data.remote.RestaurantsApiService
 import com.example.restaurantsapp.restaurants.presentation.DummyContent
 import kotlinx.coroutines.delay
 
-class FakeApiService( private val shouldThrowException: Boolean = false
+class FakeApiService(
+    var shouldThrowException: Boolean = false
 ) : RestaurantsApiService {
     override suspend fun getRestaurants()
     :List<RemoteRestaurant> {

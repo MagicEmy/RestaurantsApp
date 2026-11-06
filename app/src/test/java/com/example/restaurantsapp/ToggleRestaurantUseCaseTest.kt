@@ -1,47 +1,52 @@
 package com.example.restaurantsapp
 
 import com.example.restaurantsapp.restaurants.data.RestaurantsRepository
-import com.example.restaurantsapp.restaurants.domain.GetSortedRestaurantsUseCase
+import com.example.restaurantsapp.restaurants.data.local.LocalRestaurant
 import com.example.restaurantsapp.restaurants.domain.ToggleRestaurantUseCase
-import com.example.restaurantsapp.restaurants.presentation.DummyContent
+import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
 class ToggleRestaurantUseCaseTest {
-    private  val dispatcher = StandardTestDispatcher()
-    private val scope = TestScope(dispatcher)
+
     @Test
     fun toggleRestaurant_isUpdatingFavoriteField() =
-        scope.runTest {
+        runTest {
+            val dispatcher = StandardTestDispatcher(testScheduler)
+
+            val fakeRoomDao = FakeRoomDao()
+
+            val originalRestaurant = LocalRestaurant(
+                id = 1,
+                title = "Test restaurant",
+                description = "Test description",
+                isFavorite = false
+            )
+
+            fakeRoomDao.addAll(
+                listOf(originalRestaurant)
+            )
             val restaurantsRepository = RestaurantsRepository(
                 FakeApiService(),
-                FakeRoomDao(),
+                fakeRoomDao,
                 dispatcher
             )
-            val getSortedRestaurantsUseCase =
-                GetSortedRestaurantsUseCase(restaurantsRepository)
-            val useCase = ToggleRestaurantUseCase(
-                restaurantsRepository,
-                getSortedRestaurantsUseCase
-            )
-            restaurantsRepository.loadRestaurants()
-            advanceUntilIdle()
+            val toggleRestaurantUseCase = ToggleRestaurantUseCase(restaurantsRepository)
 
-            val restaurants = DummyContent.getDomainRestaurants()
-            val targetItem = restaurants[0]
-            val isFavorite = targetItem.isFavorite
-            val updatedRestaurants = useCase(
-                targetItem.id,
-                isFavorite
+            toggleRestaurantUseCase(
+                id = originalRestaurant.id,
+                oldValue = originalRestaurant.isFavorite
             )
-            advanceUntilIdle()
 
-            restaurants[0] = targetItem.copy(isFavorite = !isFavorite)
-            assert(updatedRestaurants == restaurants)
+            val updatedRestaurant =
+                fakeRoomDao.getAll().single()
+
+            assertEquals(
+                true,
+                updatedRestaurant.isFavorite
+            )
         }
 }
