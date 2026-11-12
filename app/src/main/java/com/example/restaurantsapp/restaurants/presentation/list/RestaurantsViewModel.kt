@@ -1,7 +1,5 @@
 package com.example.restaurantsapp.restaurants.presentation.list
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -17,6 +15,12 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+
+
 
 @HiltViewModel
 class RestaurantsViewModel @Inject constructor (
@@ -26,13 +30,14 @@ class RestaurantsViewModel @Inject constructor (
     @MainDispatcher private val dispatcher : CoroutineDispatcher
 ): ViewModel() {
     private val _state =
-        mutableStateOf(
+        MutableStateFlow(
             RestaurantsScreenState(
                 isLoading = true
             )
         )
-    val state: State<RestaurantsScreenState>
-        get() = _state
+    val state: StateFlow<RestaurantsScreenState> =
+        _state.asStateFlow()
+
 
     val pageRestaurants: Flow<PagingData<Restaurant>> =
         getPagedRestaurantsUseCase()
@@ -41,10 +46,12 @@ class RestaurantsViewModel @Inject constructor (
 
     private val errorHandler = CoroutineExceptionHandler { _, exception ->
         exception.printStackTrace()
-        _state.value = _state.value.copy(
-            error = exception.message,
-            isLoading = false
-        )
+        _state.update { currentState ->
+            currentState.copy(
+                error = exception.message,
+                isLoading = false
+            )
+        }
     }
 
     init {
@@ -54,22 +61,28 @@ class RestaurantsViewModel @Inject constructor (
     private fun getRestaurants() {
         viewModelScope.launch(errorHandler + dispatcher) {
             getRestaurantsUseCase()
-            _state.value = _state.value.copy(
-                isLoading = false
-            )
+            _state.update { currentState ->
+                currentState.copy(
+                    isLoading = false
+                )
+            }
         }
     }
 
     fun retryInitialLoad() {
-        _state.value = _state.value.copy(
-            isLoading = true,
-            error = null
-        )
+       _state.update { currentState ->
+           currentState.copy(
+               isLoading = true,
+               error = null
+           )
+       }
         getRestaurants()
     }
 
     fun toggleFavorite(id: Int, oldValue: Boolean) {
-        viewModelScope.launch(errorHandler + dispatcher ) {
+        viewModelScope.launch(
+            errorHandler + dispatcher
+        ) {
             toggleRestaurantUseCase(id, oldValue)
         }
     }

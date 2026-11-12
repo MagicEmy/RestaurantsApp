@@ -13,6 +13,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.restaurantsapp.restaurants.presentation.details.RestaurantDetailsScreen
 import com.example.restaurantsapp.restaurants.presentation.details.RestaurantDetailsViewModel
 import com.example.restaurantsapp.restaurants.presentation.list.RestaurantsScreen
@@ -37,17 +39,24 @@ class MainActivity : ComponentActivity() {
         val navController = rememberNavController()
         NavHost(navController, startDestination = "restaurants") {
             composable(route = "restaurants") {
-                val viewModel: RestaurantsViewModel = hiltViewModel()
+                val viewModel: RestaurantsViewModel =
+                    hiltViewModel()
+                val state by
+                        viewModel.state.collectAsStateWithLifecycle()
                 val restaurants =
                     viewModel.pageRestaurants.collectAsLazyPagingItems()
+
                 RestaurantsScreen(
-                    state = viewModel.state.value,
+                    state = state,
                     restaurants = restaurants,
                     onItemClick = { id ->
-                        navController.navigate("restaurants/$id")
+                        navController.navigate(
+                            "restaurants/$id")
                     },
                     onFavoriteClick = { id, oldValue ->
-                        viewModel.toggleFavorite(id, oldValue)
+                        viewModel.toggleFavorite(
+                            id,
+                            oldValue)
                     },
                     onRetryRemote = viewModel::retryInitialLoad
                 )
@@ -62,7 +71,10 @@ class MainActivity : ComponentActivity() {
                 }),
             ) {
                 val viewModel: RestaurantDetailsViewModel = hiltViewModel()
-                RestaurantDetailsScreen(state = viewModel.state.value)
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                RestaurantDetailsScreen(
+                    state = state
+                )
             }
         }
     }
