@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "restaurants")
 data class LocalRestaurant(
-    @PrimaryKey()
+    @PrimaryKey
     @ColumnInfo(name = "r_id")
     val id: Int,
     @ColumnInfo(name = "r_title")

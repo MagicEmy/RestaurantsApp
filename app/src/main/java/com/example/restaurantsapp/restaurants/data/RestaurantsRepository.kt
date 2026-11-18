@@ -87,4 +87,17 @@ class RestaurantsRepository @Inject constructor(
             }
         }
     }
+
+    suspend fun getRestaurantById(id: Int): Restaurant? =
+        withContext(dispatcher) {
+            restaurantsDao.getRestaurantById(id)?.let {
+                localRestaurant ->
+                Restaurant (
+                    id = localRestaurant.id,
+                    title = localRestaurant.title,
+                    description = localRestaurant.description,
+                    isFavorite = localRestaurant.isFavorite
+                )
+            }
+        }
 }

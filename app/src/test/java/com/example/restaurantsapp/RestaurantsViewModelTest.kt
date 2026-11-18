@@ -8,48 +8,44 @@ import com.example.restaurantsapp.restaurants.presentation.list.RestaurantsScree
 import com.example.restaurantsapp.restaurants.presentation.list.RestaurantsViewModel
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RestaurantsViewModelTest {
-    private val dispatcher = StandardTestDispatcher()
-    private val scope = TestScope(dispatcher)
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     private fun getViewModel(
         apiService: FakeApiService = FakeApiService()
     ): RestaurantsViewModel {
-        val restaurantsRepository =
-            RestaurantsRepository(
-                apiService,
-                FakeRoomDao(),
-                dispatcher
-            )
+        val restaurantsRepository = RestaurantsRepository(
+            apiService,
+            FakeRoomDao(),
+            mainDispatcherRule.testDispatcher
+        )
+
         val getInitialRestaurantsUseCase =
-            GetInitialRestaurantsUseCase(
-                restaurantsRepository
-            )
+            GetInitialRestaurantsUseCase(restaurantsRepository)
+
         val getPagedRestaurantsUseCase =
-            GetPagedRestaurantsUseCase(
-                restaurantsRepository
-            )
+            GetPagedRestaurantsUseCase(restaurantsRepository)
+
         val toggleRestaurantUseCase =
-            ToggleRestaurantUseCase(
-                restaurantsRepository
-            )
+            ToggleRestaurantUseCase(restaurantsRepository)
+
         return RestaurantsViewModel(
             getInitialRestaurantsUseCase,
-            getPagedRestaurantsUseCase = getPagedRestaurantsUseCase,
-            toggleRestaurantUseCase = toggleRestaurantUseCase,
-            dispatcher = dispatcher
+            getPagedRestaurantsUseCase,
+            toggleRestaurantUseCase,
+            mainDispatcherRule.testDispatcher
         )
     }
 
     @Test
-    fun initialState_isProduced() = scope.runTest {
+    fun initialState_isProduced() = runTest {
         val viewModel = getViewModel()
         val initialState = viewModel.state.value
         assertEquals(
@@ -63,7 +59,7 @@ class RestaurantsViewModelTest {
 
     @Test
     fun successfulInitialLoad_updatesLoadingState() =
-        scope.runTest {
+        runTest {
             val viewModel = getViewModel()
 
             advanceUntilIdle()
@@ -79,7 +75,7 @@ class RestaurantsViewModelTest {
 
     @Test
     fun failedInitialLoad_producesErrorState() =
-        scope.runTest {
+        runTest {
             val apiService = FakeApiService().apply {
                 shouldThrowException = true
             }
@@ -97,7 +93,7 @@ class RestaurantsViewModelTest {
         }
     @Test
     fun retryInitialLoad_afterError_producesSuccessState() =
-        scope.runTest {
+        runTest {
             val apiService = FakeApiService(
                 shouldThrowException = true
             )

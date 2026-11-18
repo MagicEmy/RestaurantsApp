@@ -18,6 +18,8 @@ interface RestaurantsDao {
         """
     )
     fun getRestaurantsPagingSource(): PagingSource<Int, LocalRestaurant>
+    @Query("SELECT * FROM restaurants WHERE r_id = :id LIMIT 1")
+    suspend fun getRestaurantById(id: Int): LocalRestaurant?
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addAll(restaurants: List<LocalRestaurant>)
     @Update(entity = LocalRestaurant::class)

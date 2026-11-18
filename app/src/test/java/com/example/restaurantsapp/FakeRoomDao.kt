@@ -15,6 +15,12 @@ class FakeRoomDao : RestaurantsDao {
         return restaurants.values.toList()
     }
 
+    override suspend fun getRestaurantById(
+        id: Int
+    ): LocalRestaurant? {
+        return restaurants[id]
+    }
+
     override fun getRestaurantsPagingSource(): PagingSource<Int, LocalRestaurant> {
         val sortedRestaurants = restaurants.values
             .sortedWith(
